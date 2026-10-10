@@ -49,7 +49,7 @@ elif income_level == "Medium":
 elif income_level == "High":
     filtered = filtered[filtered["median_income"] >= 4.5]
 
-# ---------- 地图（用散点图代替 st.map） ----------
+# ---------- 地图 ----------
 st.subheader("Map of Filtered Districts")
 
 if filtered.empty:
@@ -59,14 +59,7 @@ else:
     map_df["latitude"] = pd.to_numeric(map_df["latitude"], errors="coerce")
     map_df["longitude"] = pd.to_numeric(map_df["longitude"], errors="coerce")
     map_df = map_df.dropna(subset=["latitude", "longitude"])
-    st.scatter_chart(
-        map_df,
-        x="longitude",
-        y="latitude",
-        size="median_house_value",
-        color="median_house_value",
-        use_container_width=True
-    )
+    st.map(map_df, latitude="latitude", longitude="longitude")
 
 # ---------- 直方图 ----------
 st.subheader("Histogram of Median House Value")
