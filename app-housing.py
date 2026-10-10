@@ -1,72 +1,54 @@
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
+from matplotlib import style
+from matplotlib.figure import Figure
 
-# ---------- 标题（已换成你的名字） ----------
-st.title("California Housing Data (1990) by Kunkun Luo")
+style.use("seaborn-v0_8")
 
-# ---------- 读取数据（自动识别分隔符） ----------
-@st.cache_data
-def load_data():
-    return pd.read_csv("housing.csv", sep=None, engine="python")
+st.title("California Housing Data (1990) by Junxian Chen")
 
-df = load_data()
+# The CSV stays in the repository root, including when this page is in pages/.
+app_folder = Path(__file__).resolve().parent
+data_folder = app_folder.parent if app_folder.name == "pages" else app_folder
+df = pd.read_csv(data_folder / "housing.csv")
 
-# ---------- 滑块：最小房价中位数 ----------
-min_value = st.slider(
-    "Minimal Median House Value",
-    min_value=0,
-    max_value=500001,
-    value=200000,
-    step=1000
+house_value_filter = st.slider(
+    "Minimal Median House Value", 0, 500001, 200000
 )
 
-# ---------- 副标题 ----------
 st.subheader("See more filters in the sidebar:")
 
-# ---------- 侧边栏：地点类型多选 ----------
-all_locations = ["NEAR BAY", "<1H OCEAN", "INLAND", "NEAR OCEAN", "ISLAND"]
-selected_locations = st.sidebar.multiselect(
-    "Choose the location type",
-    options=all_locations,
-    default=all_locations
+location_types = df["ocean_proximity"].dropna().unique().tolist()
+location_filter = st.sidebar.multiselect(
+    "Choose the location type", location_types, default=location_types
 )
 
-# ---------- 侧边栏：收入等级单选（默认 High） ----------
-income_level = st.sidebar.radio(
-    "Choose income level",
-    options=["Low", "Medium", "High"],
-    index=2
+income_filter = st.sidebar.radio(
+    "Choose income level", ["Low", "Medium", "High"]
 )
 
-# ---------- 数据筛选 ----------
-filtered = df[df["median_house_value"] >= min_value].copy()
-filtered = filtered[filtered["ocean_proximity"].isin(selected_locations)]
+df = df[df["median_house_value"] >= house_value_filter]
+df = df[df["ocean_proximity"].isin(location_filter)]
 
-if income_level == "Low":
-    filtered = filtered[filtered["median_income"] <= 2.5]
-elif income_level == "Medium":
-    filtered = filtered[(filtered["median_income"] > 2.5) & (filtered["median_income"] < 4.5)]
-elif income_level == "High":
-    filtered = filtered[filtered["median_income"] >= 4.5]
-
-# ---------- 地图 ----------
-st.subheader("Map of Filtered Districts")
-
-if filtered.empty:
-    st.warning("No districts match the current filters. Try lowering the house value or changing the income level.")
+if income_filter == "Low":
+    df = df[df["median_income"] <= 2.5]
+elif income_filter == "Medium":
+    df = df[(df["median_income"] > 2.5) & (df["median_income"] < 4.5)]
 else:
-    map_df = filtered.copy()
-    map_df["latitude"] = pd.to_numeric(map_df["latitude"], errors="coerce")
-    map_df["longitude"] = pd.to_numeric(map_df["longitude"], errors="coerce")
-    map_df = map_df.dropna(subset=["latitude", "longitude"])
-    st.map(map_df, latitude="latitude", longitude="longitude")
+    df = df[df["median_income"] >= 4.5]
 
-# ---------- 直方图 ----------
-st.subheader("Histogram of Median House Value")
+if df.empty:
+    st.info("No districts match these filters. Try adjusting your selections.")
+    st.stop()
 
-if not filtered.empty:
-    hist_data = pd.cut(filtered["median_house_value"], bins=30).value_counts().sort_index()
-    hist_df = hist_data.reset_index()
-    hist_df.columns = ["Price Range", "Count"]
-    hist_df["Price Range"] = hist_df["Price Range"].astype(str)
-    st.bar_chart(hist_df, x="Price Range", y="Count", use_container_width=True)
+st.map(df[["latitude", "longitude"]])
+
+st.subheader("Median House Value Distribution")
+fig = Figure(figsize=(10, 5))
+ax = fig.subplots()
+ax.hist(df["median_house_value"], bins=30)
+ax.set_xlabel("Median House Value (USD)")
+ax.set_ylabel("Number of Districts")
+st.pyplot(fig)
