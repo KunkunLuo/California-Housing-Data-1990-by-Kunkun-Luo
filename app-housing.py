@@ -4,10 +4,10 @@ import pandas as pd
 # ---------- 标题（已换成你的名字） ----------
 st.title("California Housing Data (1990) by Kunkun Luo")
 
-# ---------- 读取数据 ----------
+# ---------- 读取数据（自动识别分隔符） ----------
 @st.cache_data
 def load_data():
-    return pd.read_csv("housing.csv")
+    return pd.read_csv("housing.csv", sep=None, engine="python")
 
 df = load_data()
 
