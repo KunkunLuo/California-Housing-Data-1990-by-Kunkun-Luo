@@ -35,6 +35,7 @@ selected_locations = st.sidebar.multiselect(
 income_level = st.sidebar.radio(
     "Choose income level",
     options=["Low", "Medium", "High"]
+    index=2
 )
 
 # ---------- 数据筛选 ----------
@@ -53,7 +54,10 @@ elif income_level == "High":
     filtered = filtered[filtered["median_income"] >= 4.5]
 
 # ---------- 地图 ----------
-st.map(filtered, latitude="latitude", longitude="longitude")
+if filtered.empty:
+    st.warning("No districts match the current filters. Try lowering the house value or changing the income level.")
+else:
+    st.map(filtered, latitude="latitude", longitude="longitude")
 
 # ---------- 直方图 ----------
 st.subheader("Histogram of Median House Value")
