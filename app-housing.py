@@ -39,13 +39,9 @@ income_level = st.sidebar.radio(
 )
 
 # ---------- 数据筛选 ----------
-# 1) 房价筛选
 filtered = df[df["median_house_value"] >= min_value].copy()
-
-# 2) 地点类型筛选
 filtered = filtered[filtered["ocean_proximity"].isin(selected_locations)]
 
-# 3) 收入等级筛选
 if income_level == "Low":
     filtered = filtered[filtered["median_income"] <= 2.5]
 elif income_level == "Medium":
@@ -53,11 +49,24 @@ elif income_level == "Medium":
 elif income_level == "High":
     filtered = filtered[filtered["median_income"] >= 4.5]
 
-# ---------- 地图 ----------
+# ---------- 地图（用散点图代替 st.map） ----------
+st.subheader("Map of Filtered Districts")
+
 if filtered.empty:
     st.warning("No districts match the current filters. Try lowering the house value or changing the income level.")
 else:
-    st.map(filtered, latitude="latitude", longitude="longitude")
+    map_df = filtered.copy()
+    map_df["latitude"] = pd.to_numeric(map_df["latitude"], errors="coerce")
+    map_df["longitude"] = pd.to_numeric(map_df["longitude"], errors="coerce")
+    map_df = map_df.dropna(subset=["latitude", "longitude"])
+    st.scatter_chart(
+        map_df,
+        x="longitude",
+        y="latitude",
+        size="median_house_value",
+        color="median_house_value",
+        use_container_width=True
+    )
 
 # ---------- 直方图 ----------
 st.subheader("Histogram of Median House Value")
