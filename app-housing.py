@@ -57,8 +57,10 @@ st.map(filtered, latitude="latitude", longitude="longitude")
 
 # ---------- 直方图 ----------
 st.subheader("Histogram of Median House Value")
-hist_values = filtered["median_house_value"]
-st.bar_chart(
-    pd.cut(hist_values, bins=30).value_counts().sort_index(),
-    use_container_width=True
-)
+
+hist_data = pd.cut(filtered["median_house_value"], bins=30).value_counts().sort_index()
+hist_df = hist_data.reset_index()
+hist_df.columns = ["Price Range", "Count"]
+hist_df["Price Range"] = hist_df["Price Range"].astype(str)
+
+st.bar_chart(hist_df, x="Price Range", y="Count", use_container_width=True)
