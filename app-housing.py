@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 
-# ---------- 标题（换成你的名字） ----------
+# ---------- 标题（已换成你的名字） ----------
 st.title("California Housing Data (1990) by Kunkun Luo")
 
 # ---------- 读取数据 ----------
@@ -31,10 +31,10 @@ selected_locations = st.sidebar.multiselect(
     default=all_locations
 )
 
-# ---------- 侧边栏：收入等级单选 ----------
+# ---------- 侧边栏：收入等级单选（默认 High） ----------
 income_level = st.sidebar.radio(
     "Choose income level",
-    options=["Low", "Medium", "High"]
+    options=["Low", "Medium", "High"],
     index=2
 )
 
@@ -45,7 +45,7 @@ filtered = df[df["median_house_value"] >= min_value].copy()
 # 2) 地点类型筛选
 filtered = filtered[filtered["ocean_proximity"].isin(selected_locations)]
 
-# 3) 收入等级筛选（用 if 语句）
+# 3) 收入等级筛选
 if income_level == "Low":
     filtered = filtered[filtered["median_income"] <= 2.5]
 elif income_level == "Medium":
@@ -62,9 +62,9 @@ else:
 # ---------- 直方图 ----------
 st.subheader("Histogram of Median House Value")
 
-hist_data = pd.cut(filtered["median_house_value"], bins=30).value_counts().sort_index()
-hist_df = hist_data.reset_index()
-hist_df.columns = ["Price Range", "Count"]
-hist_df["Price Range"] = hist_df["Price Range"].astype(str)
-
-st.bar_chart(hist_df, x="Price Range", y="Count", use_container_width=True)
+if not filtered.empty:
+    hist_data = pd.cut(filtered["median_house_value"], bins=30).value_counts().sort_index()
+    hist_df = hist_data.reset_index()
+    hist_df.columns = ["Price Range", "Count"]
+    hist_df["Price Range"] = hist_df["Price Range"].astype(str)
+    st.bar_chart(hist_df, x="Price Range", y="Count", use_container_width=True)
